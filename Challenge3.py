@@ -13,7 +13,7 @@ from pycbc.types import TimeSeries
 import numpy
 %matplotlib inline
  
-# -- download data
+# -- Data downloaded
 ! wget https://www.gw-openscience.org/s/workshop3/challenge/challenge3.gwf
  
 # -- for pycbc
@@ -25,20 +25,15 @@ print(pycbc_strain)
 pycbc_strain = highpass(pycbc_strain, 20)
 pycbc_strain = resample_to_delta_t(pycbc_strain, 1.0/2048)
  
-#Plot the data in the time-domain.
+#Plotting the data in the time-domain.
 conditioned = pycbc_strain.crop(2, 2)
 psd = conditioned.psd(4)
  
-# Now that we have the psd we need to interpolate it to match our data
-# and then limit the filter length of 1 / PSD. After this, we can
-# directly use this PSD to filter the data in a controlled manner
+# Interpolating to match data
  
 psd = interpolate(psd, conditioned.delta_f)
  
-# 1/PSD will now act as a filter with an effective length of 4 seconds
-# Since the data has been highpassed above 20 Hz, and will have low values
-# below this we need to informat the function to not include frequencies
-# below this frequency. 
+
 psd = inverse_spectrum_truncation(psd, int(4 * conditioned.sample_rate),
                                   low_frequency_cutoff=20)
  
@@ -57,13 +52,13 @@ pylab.show()
  
 #PSD Plotting ends
  
-#plot the strain data
+#plotting the strain data
 pylab.plot(conditioned.sample_times , conditioned)
 pylab.xlabel('Time (s)')
 pylab.show()
 # Strain data plotting ends
  
-#Generate waveform with mass m = 30 and spin = 0
+#Generating waveform with mass m = 30 and spin = 0
 m = 10 # Solar masses
 hp, hc = get_td_waveform(approximant="SEOBNRv4_opt",
                      mass1=m,
@@ -71,7 +66,7 @@ hp, hc = get_td_waveform(approximant="SEOBNRv4_opt",
                      delta_t=conditioned.delta_t,
                      f_lower=20)
  
-# Resize the vector to match our data
+# Resizing the vector to match our data
 hp.resize(len(conditioned))
  
 pylab.figure()
@@ -90,25 +85,17 @@ pylab.ylabel('Strain')
  
 #Wave form generation ends 
  
-#Create Matched filter
+#Created Matched filter
 snr = matched_filter(template, conditioned,
                      psd=psd, low_frequency_cutoff=20)
  
-# Remove time corrupted by the template filter and the psd filter
-# We remove 4 seconds at the beginning and end for the PSD filtering
-# And we remove 4 additional seconds at the beginning to account for
-# the template length (this is somewhat generous for 
-# so short a template). A longer signal such as from a BNS, would 
-# require much more padding at the beginning of the vector.
+# Removed time corrupted by the template filter and the psd filter
+# removed 4 seconds at the beginning and end for the PSD filtering
+# removed 4 additional seconds at the beginning to account for
+
 snr = snr.crop(4 + 4, 4)
  
-# Why are we taking an abs() here?
-# The `matched_filter` function actually returns a 'complex' SNR.
-# What that means is that the real portion correponds to the SNR
-# associated with directly filtering the template with the data.
-# The imaginary portion corresponds to filtering with a template that
-# is 90 degrees out of phase. Since the phase of a signal may be 
-# anything, we choose to maximize over the phase of the signal.
+
 pylab.figure(figsize=[10, 4])
 pylab.plot(snr.sample_times, abs(snr))
 pylab.ylabel('Signal-to-noise')
@@ -122,29 +109,28 @@ time = snr.sample_times[peak]
  
 print("We found a signal at {}s with SNR {}".format(time, abs(snrp)))
  
-# The time, amplitude, and phase of the SNR peak tell us how to align
-# our proposed signal with the data.
+
  
-# Shift the template to the peak time
+# Shifted the template to the peak time
 dt = time - conditioned.start_time
 aligned = template.cyclic_time_shift(dt)
  
-# scale the template so that it would have SNR 1 in this data
+# scaled the template so that it would have SNR 1 in this data
 aligned /= sigma(aligned, psd=psd, low_frequency_cutoff=20.0)
  
-# Scale the template amplitude and phase to the peak value
+# Scale dthe template amplitude and phase to the peak value
 aligned = (aligned.to_frequencyseries() * snrp).to_timeseries()
 aligned.start_time = conditioned.start_time
  
 #Whiten the data
-# We do it this way so that we can whiten both the template and the data
+
 white_data = (conditioned.to_frequencyseries() / psd**0.5).to_timeseries()
 white_template = (aligned.to_frequencyseries() / psd**0.5).to_timeseries()
  
 white_data = white_data.highpass_fir(30., 512).lowpass_fir(300, 512)
 white_template = white_template.highpass_fir(30, 512).lowpass_fir(300, 512)
  
-# Select the time around the merger
+# Selected the time around the merger
 mergertime = time
 white_data = white_data.time_slice(mergertime-.2, mergertime+.1)
 white_template = white_template.time_slice(mergertime-.2, mergertime+.1)
@@ -157,11 +143,9 @@ pylab.show()
  
 subtracted = conditioned - aligned
  
-# Plot the original data and the subtracted signal data
+# Plotted the original data and the subtracted signal data
  
-#Qtransform white data and plot the graph
-#Qtransform white data and plot the graph[
-# Plot a spectrogram (or q-transform) of the data, and try to identify the signal
+
  
 for data, title in [(conditioned, 'Original H1 Data'),
                     (subtracted, 'Signal Subtracted from H1 Data')]:
@@ -178,7 +162,3 @@ for data, title in [(conditioned, 'Original H1 Data'),
 
 
 
-[-3.04517369e-19 -3.35465069e-19 -3.35210566e-19 ...  4.46471052e-19
-  5.07624678e-19  4.98623016e-19]
-[0.00000000e+00 2.44379277e-04 4.88758553e-04 ... 1.02399951e+03
- 1.02399976e+03 1.02400000e+03]
