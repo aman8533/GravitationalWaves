@@ -18,7 +18,6 @@ for fname in files:
   get_file(fname)
                 
 
-# An example of how to read the data from these files:
 file_name = "challenge1.gwf"
 
 channel_name = "H1:CHALLENGE1"
@@ -33,7 +32,7 @@ print("Duration of the dataset",duration)
 strain = highpass(ts, 15.0)
 strain = resample_to_delta_t(strain, 1.0/2048)
 
-#Plot the data in the time-domain.
+#Plotted the data in the time-domain.
 conditioned = strain.crop(2, 2)
 psd = conditioned.psd(4)
 psd = interpolate(psd, conditioned.delta_f)
@@ -45,9 +44,8 @@ pylab.show()
 
 print("Strain Sampletimes",conditioned.sample_times)
 
-#Qtransform white data and plot the graph
-#Qtransform white data and plot the graph[
-# Plot a spectrogram (or q-transform) of the data, and try to identify the signal
+
+# Plotted a spectrogram (or q-transform) of the data, and try to identify the signal
 
 for data in [conditioned]:
     t, f, p = data.whiten(4, 4).qtransform(.001, logfsteps=100, qrange=(8, 8), frange=(20, 512))
@@ -62,10 +60,10 @@ for data in [conditioned]:
     print ("Merger time is observed at:",tshiftgaussian,"seconds")
     # GW170814 data
     merger = Merger("GW170814")
-    # Get the data from the Hanford detector
+    # Got the data from the Hanford detector
     strain = merger.strain('H1')
     print("Merger Time of GW170814 is:",merger.time)
-    # Remove the low frequency content and downsample the data to 2048Hz
+    # Removed the low frequency content and downsample the data to 2048Hz
     strain = highpass(strain, 15.0)
     strain = resample_to_delta_t(strain, 1.0/2048)
     conditioned = strain.crop(2, 2)
